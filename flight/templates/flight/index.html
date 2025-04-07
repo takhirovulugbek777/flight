@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #e2e8f0;
+            --border-dark: #cbd5e1;
+            --background: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--background);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .search-box {
+            flex: 1;
+            display: flex;
+            background-color: var(--background);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .search-box select, .search-box input {
+            border: none;
+            padding: 12px 16px;
+            font-size: 16px;
+            flex: 1;
+            outline: none;
+        }
+
+        .search-box select {
+            border-right: 1px solid var(--border);
+            background-color: var(--light);
+            cursor: pointer;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .flights-container {
+            margin-top: 24px;
+        }
+
+        .flights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .flights-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .flights-count {
+            background-color: var(--light);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            color: var(--secondary);
+        }
+
+        .flights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 16px;
+        }
+
+        .flight-card {
+            background-color: var(--background);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .flight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .flight-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flight-number {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .flight-status {
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-scheduled {
+            background-color: #dbeafe;
+            color: #2563eb;
+        }
+
+        .status-arrived {
+            background-color: #dcfce7;
+            color: #16a34a;
+        }
+
+        .status-departed {
+            background-color: #fef9c3;
+            color: #ca8a04;
+        }
+
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .flight-body {
+            padding: 16px;
+        }
+
+        .flight-route {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .airport {
+            text-align: center;
+        }
+
+        .airport-code {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .airport-name {
+            font-size: 14px;
+            color: var(--text-light);
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .route-line {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+        }
+
+        .route-line hr {
+            flex: 1;
+            border: none;
+            height: 2px;
+            background-color: var(--border-dark);
+        }
+
+        .route-line svg {
+            margin: 0 8px;
+            color: var(--secondary);
+        }
+
+        .flight-times {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .time-group {
+            text-align: center;
+        }
+
+        .time-label {
+            font-size: 14px;
+            color: var(--text-light);
+        }
+
+        .time-value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .flight-details {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .detail-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 5px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        .skeleton-card {
+            height: 200px;
+            border-radius: 12px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 24px;
+            gap: 8px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            background-color: var(--background);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .pagination button.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--text-light);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes loading {
+            0% {
+                background-position: 200% 0;
+            }
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-container {
+                flex-direction: column;
+            }
+
+            .flights-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="loading-overlay">
+    <div class="spinner"></div>
+</div>
+
+<header>
+    <div class="container">
+        <div class="header-content">
+            <div class="logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                Flight Dashboard
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <div class="search-container">
+        <div class="search-box">
+            <select id="search-type">
+                <option value="departure">Departure Airport</option>
+                <option value="arrival">Arrival Airport</option>
+            </select>
+            <input type="text" id="search-input" placeholder="Enter airport code (e.g., SKX)">
+        </div>
+        <button id="search-button">Search</button>
+    </div>
+
+    <div class="flights-container">
+        <div class="flights-header">
+            <h2 class="flights-title">All Flights</h2>
+            <div class="flights-count" id="flights-count">Loading...</div>
+        </div>
+
+        <div class="flights-grid" id="flights-grid">
+            <!-- Skeleton cards will be inserted here -->
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- Pagination buttons will be inserted here -->
+        </div>
+    </div>
+</main>
+
+<script>
+    $(document).ready(function () {
+        const API_URL = 'http://127.0.0.1:8000/api/airport/';
+        let currentPage = 1;
+        let totalPages = 1;
+        let isLoading = false;
+        let cachedData = {};
+        let lastSearchParams = '';
+
+        // Check if we have cached data in localStorage
+        const loadCachedData = () => {
+            const cached = localStorage.getItem('flightData');
+            if (cached) {
+                try {
+                    cachedData = JSON.parse(cached);
+                } catch (e) {
+                    console.error('Error parsing cached data', e);
+                    localStorage.removeItem('flightData');
+                }
+            }
+        };
+
+        // Save data to cache
+        const saveToCache = (key, data) => {
+            cachedData[key] = {
+                timestamp: Date.now(),
+                data: data
+            };
+            localStorage.setItem('flightData', JSON.stringify(cachedData));
+        };
+
+        // Check if cache is valid (less than 5 minutes old)
+        const isCacheValid = (key) => {
+            if (!cachedData[key]) return false;
+            const now = Date.now();
+            const cacheTime = cachedData[key].timestamp;
+            // Cache valid for 5 minutes
+            return (now - cacheTime) < 5 * 60 * 1000;
+        };
+
+        // Show loading state
+        const showLoading = () => {
+            isLoading = true;
+            $('.loading-overlay').addClass('active');
+        };
+
+        // Hide loading state
+        const hideLoading = () => {
+            isLoading = false;
+            $('.loading-overlay').removeClass('active');
+        };
+
+        // Format date and time
+        const formatDateTime = (dateTimeStr) => {
+            if (!dateTimeStr) return 'N/A';
+            const date = new Date(dateTimeStr);
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        };
+
+        // Create skeleton loading cards
+        const createSkeletons = (count = 6) => {
+            let skeletons = '';
+            for (let i = 0; i < count; i++) {
+                skeletons += '<div class="flight-card skeleton skeleton-card"></div>';
+            }
+            return skeletons;
+        };
+
+        // Create flight card HTML
+        const createFlightCard = (flight) => {
+            const statusClass = `status-${flight.status.toLowerCase()}`;
+
+            return `
+                    <div class="flight-card" data-id="${flight.flight_id}">
+                        <div class="flight-header">
+                            <div class="flight-number">${flight.flight_no}</div>
+                            <div class="flight-status ${statusClass}">${flight.status}</div>
+                        </div>
+                        <div class="flight-body">
+                            <div class="flight-route">
+                                <div class="airport">
+                                    <div class="airport-code">${flight.departure_airport}</div>
+                                    <div class="airport-name" title="${flight.departure_airport_details.airport_name}">${flight.departure_airport_details.airport_name}</div>
+                                </div>
+                                <div class="route-line">
+                                    <hr>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                    </svg>
+                                    <hr>
+                                </div>
+                                <div class="airport">
+                                    <div class="airport-code">${flight.arrival_airport}</div>
+                                    <div class="airport-name" title="${flight.arrival_airport_details.airport_name}">${flight.arrival_airport_details.airport_name}</div>
+                                </div>
+                            </div>
+                            <div class="flight-times">
+                                <div class="time-group">
+                                    <div class="time-label">Scheduled Departure</div>
+                                    <div class="time-value">${formatDateTime(flight.scheduled_departure)}</div>
+                                </div>
+                                <div class="time-group">
+                                    <div class="time-label">Scheduled Arrival</div>
+                                    <div class="time-value">${formatDateTime(flight.scheduled_arrival)}</div>
+                                </div>
+                            </div>
+                            <div class="flight-details">
+                                <div class="detail-item">
+                                    <div class="detail-label">Aircraft</div>
+                                    <div class="detail-value">${flight.aircraft_code}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Flight Time</div>
+                                    <div class="detail-value">${flight.flight_time || 'N/A'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Passengers</div>
+                                    <div class="detail-value">${flight.passengers_count}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+        };
+
+        // Create pagination
+        const createPagination = (currentPage, totalPages) => {
+            let pagination = '';
+
+            // Previous button
+            pagination += `<button ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">Previous</button>`;
+
+            // Page numbers
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + 4);
+
+            for (let i = startPage; i <= endPage; i++) {
+                pagination += `<button class="${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+
+            // Next button
+            pagination += `<button ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">Next</button>`;
+
+            return pagination;
+        };
+
+        // Fetch flights data
+        const fetchFlights = (page = 1, params = '') => {
+            const url = `${API_URL}?page=${page}${params}`;
+            const cacheKey = `${url}`;
+
+            // Show skeletons first
+            if (!isCacheValid(cacheKey)) {
+                $('#flights-grid').html(createSkeletons());
+            }
+
+            // If we have valid cached data, use it immediately
+            if (isCacheValid(cacheKey)) {
+                const cachedResult = cachedData[cacheKey].data;
+                renderFlights(cachedResult);
+                return;
+            }
+
+            // Show loading state with a slight delay to avoid flickering
+            const loadingTimeout = setTimeout(() => {
+                showLoading();
+            }, 300);
+
+            // Fetch from API
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function (result) {
+                    // Save to cache
+                    saveToCache(cacheKey, result);
+
+                    // Render the flights
+                    renderFlights(result);
+                },
+                error: function (error) {
+                    console.error('Error fetching flights:', error);
+                    $('#flights-grid').html('<div class="no-results">Error loading flights. Please try again.</div>');
+                    $('#flights-count').text('Error');
+                    $('#pagination').empty();
+                },
+                complete: function () {
+                    clearTimeout(loadingTimeout);
+
+                    // Add a slight delay before hiding loading to make transitions smoother
+                    setTimeout(() => {
+                        hideLoading();
+                    }, 500);
+                }
+            });
+        };
+
+        // Render flights data
+        const renderFlights = (data) => {
+            const flights = data.results;
+            currentPage = data.current_page || 1;
+            totalPages = data.total_pages || 1;
+
+            // Update flights count
+            $('#flights-count').text(`${data.count || 0} flights`);
+
+            // Render flight cards
+            if (flights && flights.length > 0) {
+                let flightCards = '';
+                flights.forEach(flight => {
+                    flightCards += createFlightCard(flight);
+                });
+                $('#flights-grid').html(flightCards);
+            } else {
+                $('#flights-grid').html('<div class="no-results">No flights found</div>');
+            }
+
+            // Render pagination
+            $('#pagination').html(createPagination(currentPage, totalPages));
+        };
+
+        // Handle search
+        $('#search-button').click(function () {
+            const searchType = $('#search-type').val();
+            const searchValue = $('#search-input').val().trim().toUpperCase();
+
+            let params = '';
+            if (searchValue) {
+                if (searchType === 'departure') {
+                    params = `&departure_airport__airport_code=${searchValue}`;
+                } else {
+                    params = `&arrival_airport__airport_code=${searchValue}`;
+                }
+            }
+
+            lastSearchParams = params;
+            currentPage = 1;
+            fetchFlights(currentPage, params);
+        });
+
+        // Handle pagination clicks
+        $(document).on('click', '#pagination button:not([disabled])', function () {
+            const page = $(this).data('page');
+            if (page) {
+                currentPage = page;
+                fetchFlights(currentPage, lastSearchParams);
+
+                // Scroll to top of flights container
+                $('html, body').animate({
+                    scrollTop: $('.flights-container').offset().top - 20
+                }, 300);
+            }
+        });
+
+        // Handle enter key in search input
+        $('#search-input').keypress(function (e) {
+            if (e.which === 13) {
+                $('#search-button').click();
+            }
+        });
+
+        // Initialize
+        loadCachedData();
+        fetchFlights();
+    });
+</script>
+</body>
+</html>
+
